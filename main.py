@@ -1,11 +1,14 @@
 import cv2
-import numpy as np
 
+def standerdize_lenght(caracter):
+    if len(caracter) < 7:
+        return ['0']*(7-len(caracter)) + caracter
+    return caracter
 
 def write():
-    text = "helloworld45"
+    text = "hello world"
     img_path = "tree.jpg"
-    new_path = "tree_newrrrr.png"
+    new_path = "tree_new.png"
 
     img = cv2.imread(img_path)
 
@@ -19,7 +22,7 @@ def write():
             raise ValueError()
         else:
             to_bin = lambda n: list(bin(n).replace("0b", ""))
-            text_bit = [to_bin(ord(char)) for char in text]
+            text_bit = [standerdize_lenght(to_bin(ord(char))) for char in text]
 
             h_index = 0
             v_index = 0
@@ -55,6 +58,7 @@ def write():
                     h_index += 1
 
         cv2.imwrite(new_path, img)
+    return img
 
 
 def extract_text(bits):
@@ -81,7 +85,7 @@ def extract_text(bits):
     return list_words
 
 def read():
-    img_path = "tree_newrrrr.png"
+    img_path = "tree_new.png"
     img = cv2.imread(img_path)
 
     if img is None:
@@ -97,13 +101,19 @@ def read():
 
         binairies = lambda x: '1' if not x % 2 == 0 else '0'
         bits  = [binairies(num) for num in bits]
-        import pdb; pdb.set_trace()
+
         list_words = extract_text(bits)
         print()
         print(list_words)
-
+        return img
 
 
 if __name__ == '__main__':
-    write()
-    read()
+    img = write()
+    img2 = read()
+    data = img == img2
+    for f in data:
+        for x in f:
+            for i in x:
+                if not i:
+                    print('aha')
