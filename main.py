@@ -1,119 +1,105 @@
 import cv2
+import numpy as np
+from numpy.core.fromnumeric import ravel
 
-def standerdize_lenght(caracter):
+
+TEXT = "hello world"
+IMG_PATH = "tree.jpg"
+NEW_PATH = "tree_new.png"
+
+
+
+def standerdize_length(caracter):
     if len(caracter) < 7:
         return ['0']*(7-len(caracter)) + caracter
     return caracter
 
-def write():
-    text = "hello world"
-    img_path = "tree.jpg"
-    new_path = "tree_new.png"
+
+def to_bin(n):
+    return list(bin(n).replace("0b", ""))
+
+
+def change_last_bit(value, bit):
+    value = to_bin(value)
+    value[-1] = bit
+    return int("".join(value),2)
+    
+
+def write(text, img_path, new_path):
 
     img = cv2.imread(img_path)
 
-    if img is None:
-        print("image empty")
+    h, v , _ = img.shape
+
+    if img is None: print("image empty")
+
+    if len(text)+1 > h*v : raise ValueError()
+
     else:
 
-        h,v,c = img.shape
+        text_bit = []
+        for char in text:
+            text_bit += standerdize_length(to_bin(ord(char)))
 
-        if len(text)+1 > h*v:
-            raise ValueError()
-        else:
-            to_bin = lambda n: list(bin(n).replace("0b", ""))
-            text_bit = [standerdize_lenght(to_bin(ord(char))) for char in text]
+        text_bit = np.array(text_bit + ['0']*7)
 
-            h_index = 0
-            v_index = 0
-            c_index = 0
-            for char in text_bit:
-                for bit in char:
-                    pixel = img[h_index, v_index, c_index]
-                    pixel_b = to_bin(pixel)
-                    pixel_b[-1] = bit
-                    img[h_index, v_index, c_index] = int("".join(pixel_b),2)
+        img_flat = img.ravel()
 
-                    if c_index == c-1:
-                        c_index = 0
-                        v_index += 1
-                    else:
-                        c_index += 1
-
-                    if v_index == v:
-                        v_index = 0
-                        h_index += 1
-
-            for _ in range(8):
-                img[h_index, v_index, c_index] = 0
-
-                if c_index == c-1:
-                    c_index = 0
-                    v_index += 1
-                else:
-                    c_index += 1
-
-                if v_index == v:
-                    v_index = 0
-                    h_index += 1
+        for i, p in enumerate(text_bit):
+            img_flat[i] = change_last_bit(img_flat[i], p)
 
         cv2.imwrite(new_path, img)
     return img
 
 
 def extract_text(bits):
-    index = 0
-    list_words = ''
-    word = []
-    for i in range(len(bits)):
-        word.append(bits[i])
-        index += 1
-        if index == 7:
-            print(word, end=' ')
-            word = int(''.join(word),2)
-            print(word, end=' ')
-            if word == 0:
-                return list_words
 
-            word = chr(word)
-            print(word)
-            list_words += word
+    low, high = 0, 7
+    string = ''
+    length = len(bits)
 
-            word = []
-            index = 0
+    while high < length:
 
-    return list_words
+        char = chr(int("".join(bits[low:high]), 2))
 
-def read():
-    img_path = "tree_new.png"
+        string += char
+
+        low += 7
+        high += 7
+
+    return string
+
+
+def read(img_path):
+
     img = cv2.imread(img_path)
 
-    if img is None:
-        print("image empty")
+    if img is None : print("image empty")
+
     else:
-        h,v,c = img.shape
 
+        last_bit = lambda x: '0' if x % 2 == 0 else '1'
+
+        nb_zeros = 0
         bits = []
-        for i in range(h):
-            for j in range(v):
-                for k in range(c):
-                    bits.append(img[i,j,k])
 
-        binairies = lambda x: '1' if not x % 2 == 0 else '0'
-        bits  = [binairies(num) for num in bits]
+        for i, num in enumerate(img.reshape(-1)):
 
-        list_words = extract_text(bits)
-        print()
-        print(list_words)
-        return img
+            l_bit = last_bit(num)
+
+            bits.append(l_bit)
+
+            if l_bit == '0' : nb_zeros += 1
+
+            if i != 0 and (i+1) % 7 == 0:
+                if nb_zeros == 7: break
+                else : nb_zeros = 0
+
+        return extract_text(bits)
 
 
 if __name__ == '__main__':
-    img = write()
-    img2 = read()
-    data = img == img2
-    for f in data:
-        for x in f:
-            for i in x:
-                if not i:
-                    print('aha')
+    write(TEXT, IMG_PATH, NEW_PATH)
+    string = read(NEW_PATH)
+    print(string)
+
