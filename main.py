@@ -3,15 +3,15 @@ import numpy as np
 from numpy.core.fromnumeric import ravel
 
 
-TEXT = "hello world"
+TEXT = "hello world, it's me Mariò"
 IMG_PATH = "tree.jpg"
 NEW_PATH = "tree_new.png"
-
+NB_BITS = 8
 
 
 def standerdize_length(caracter):
-    if len(caracter) < 7:
-        return ['0']*(7-len(caracter)) + caracter
+    if len(caracter) < NB_BITS:
+        return ['0']*(NB_BITS - len(caracter)) + caracter
     return caracter
 
 
@@ -41,7 +41,7 @@ def write(text, img_path, new_path):
         for char in text:
             text_bit += standerdize_length(to_bin(ord(char)))
 
-        text_bit = np.array(text_bit + ['0']*7)
+        text_bit = np.array(text_bit + ['0']*NB_BITS)
 
         img_flat = img.ravel()
 
@@ -54,18 +54,16 @@ def write(text, img_path, new_path):
 
 def extract_text(bits):
 
-    low, high = 0, 7
+    low, high = 0, NB_BITS
     string = ''
     length = len(bits)
 
     while high < length:
 
-        char = chr(int("".join(bits[low:high]), 2))
+        string += chr(int("".join(bits[low:high]), 2))
 
-        string += char
-
-        low += 7
-        high += 7
+        low += NB_BITS
+        high += NB_BITS
 
     return string
 
@@ -91,8 +89,8 @@ def read(img_path):
 
             if l_bit == '0' : nb_zeros += 1
 
-            if i != 0 and (i+1) % 7 == 0:
-                if nb_zeros == 7: break
+            if i != 0 and (i+1) % NB_BITS == 0:
+                if nb_zeros == NB_BITS: break
                 else : nb_zeros = 0
 
         return extract_text(bits)
